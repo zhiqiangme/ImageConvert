@@ -1,4 +1,5 @@
 using ImageMagick;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -16,17 +17,39 @@ namespace ImageConvert;
 
 public sealed partial class MainWindow : Window
 {
+    // 当前待转换的输入文件绝对路径列表。
     private readonly List<string> _selectedFiles = [];
+    // 当前转换任务的取消令牌源。
     private CancellationTokenSource? _convertCts;
+    // 避免转换过程中重复触发操作。
     private bool _isConverting;
 
     public MainWindow()
     {
         InitializeComponent();
+        SetWindowIcon();
+    }
+
+    // 显式设置窗口左上角图标（标题栏图标）。
+    private void SetWindowIcon()
+    {
+        try
+        {
+            var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "ImageConvert_v1.0.0.ico");
+            if (File.Exists(iconPath))
+            {
+                AppWindow.SetIcon(iconPath);
+            }
+        }
+        catch
+        {
+            // 图标设置失败不影响主流程，保持静默。
+        }
     }
 
     private void DropZone_DragOver(object sender, DragEventArgs e)
     {
+        // 声明拖拽行为为复制，让系统展示可放置光标。
         e.AcceptedOperation = DataPackageOperation.Copy;
     }
 
@@ -37,12 +60,14 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        // 仅接收文件拖入，不处理文本等其它数据类型。
         if (!e.DataView.Contains(StandardDataFormats.StorageItems))
         {
             await ShowInfoDialogAsync("仅支持拖入文件。");
             return;
         }
 
+        // 只保留 .webp 文件，并去重。
         var items = await e.DataView.GetStorageItemsAsync();
         var paths = items
             .OfType<StorageFile>()
@@ -67,6 +92,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        // 使用 WinUI 文件选择器进行多选。
         var picker = new FileOpenPicker();
         picker.FileTypeFilter.Add(".webp");
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
@@ -87,6 +113,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        // 每次开始转换都创建新的取消令牌。
         _convertCts = new CancellationTokenSource();
         SetConvertingState(true);
         await ConvertFilesSerialAsync(_selectedFiles, _convertCts.Token);
@@ -95,6 +122,7 @@ public sealed partial class MainWindow : Window
 
     private void CancelConvertButton_Click(object sender, RoutedEventArgs e)
     {
+        // 请求取消；已开始的单张转换完成后，不再继续后续图片。
         _convertCts?.Cancel();
     }
 
@@ -120,6 +148,7 @@ public sealed partial class MainWindow : Window
 
             try
             {
+                // 将单张转换放到后台线程，避免阻塞 UI 线程。
                 await Task.Run(() => ConvertSingleWebpToPng(inputPath, token), token);
                 converted++;
             }
@@ -139,6 +168,7 @@ public sealed partial class MainWindow : Window
             }
             finally
             {
+                // 无论成功/失败/不支持，都更新“已处理”进度。
                 processed++;
                 ConvertProgressBar.Value = processed;
                 StatusTextBlock.Text = $"已转换 {converted}/{total}，已处理 {processed}/{total}。";
@@ -163,6 +193,7 @@ public sealed partial class MainWindow : Window
         collection.Ping(inputPath);
         if (collection.Count > 1)
         {
+            // 多帧 WebP 视为动图，按当前产品规则直接提示不支持。
             throw new AnimatedWebpNotSupportedException();
         }
 
@@ -191,12 +222,14 @@ public sealed partial class MainWindow : Window
 
     private void SetSelectedFiles(IEnumerable<string> paths)
     {
+        // 统一转绝对路径、只保留 WebP、并做不区分大小写去重。
         _selectedFiles.Clear();
         _selectedFiles.AddRange(paths
             .Where(IsWebpPath)
             .Select(Path.GetFullPath)
             .Distinct(StringComparer.OrdinalIgnoreCase));
 
+        // 列表只展示文件名，状态区展示摘要信息。
         SelectedFilesListView.ItemsSource = _selectedFiles.Select(Path.GetFileName).ToList();
         StartConvertButton.IsEnabled = _selectedFiles.Count > 0 && !_isConverting;
         StatusTextBlock.Text = _selectedFiles.Count switch
@@ -209,6 +242,7 @@ public sealed partial class MainWindow : Window
 
     private void SetConvertingState(bool converting)
     {
+        // 切换“转换中”与“空闲中”的按钮可用状态。
         _isConverting = converting;
         StartConvertButton.IsEnabled = !converting && _selectedFiles.Count > 0;
         CancelConvertButton.IsEnabled = converting;
@@ -225,6 +259,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        // 统一弹窗入口，用于提示不支持场景与失败原因。
         var dialog = new ContentDialog
         {
             Title = "提示",
@@ -236,5 +271,6 @@ public sealed partial class MainWindow : Window
         await dialog.ShowAsync();
     }
 
+    // 用于区分“动图不支持”与一般异常。
     private sealed class AnimatedWebpNotSupportedException : Exception;
 }

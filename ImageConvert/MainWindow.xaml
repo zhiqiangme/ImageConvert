@@ -13,6 +13,7 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
+    <!-- 主布局：顶部标题、中部操作区、底部状态与文件列表 -->
     <Grid Padding="20" RowSpacing="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -23,11 +24,13 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- 页面标题 -->
         <TextBlock
             FontSize="24"
             FontWeight="SemiBold"
             Text="WebP 无损转 PNG" />
 
+        <!-- 拖拽区域 + 手动选择文件 -->
         <Border
             Grid.Row="1"
             Padding="20"
@@ -48,6 +51,7 @@
             </StackPanel>
         </Border>
 
+        <!-- 转换控制按钮 -->
         <StackPanel
             Grid.Row="2"
             Orientation="Horizontal"
@@ -64,6 +68,7 @@
                 IsEnabled="False" />
         </StackPanel>
 
+        <!-- 批量处理进度条 -->
         <ProgressBar
             x:Name="ConvertProgressBar"
             Grid.Row="3"
@@ -72,12 +77,14 @@
             Maximum="1"
             Value="0" />
 
+        <!-- 当前状态文本 -->
         <TextBlock
             x:Name="StatusTextBlock"
             Grid.Row="4"
             Text="请选择或拖拽 WebP 文件。"
             TextWrapping="Wrap" />
 
+        <!-- 已选择文件列表 -->
         <ListView
             x:Name="SelectedFilesListView"
             Grid.Row="5" />
