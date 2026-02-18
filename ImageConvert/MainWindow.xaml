@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="ImageConvert.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ImageConvert"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="ImageConvert">
+
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid Padding="20" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            FontSize="24"
+            FontWeight="SemiBold"
+            Text="WebP 无损转 PNG" />
+
+        <Border
+            Grid.Row="1"
+            Padding="20"
+            AllowDrop="True"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            DragOver="DropZone_DragOver"
+            Drop="DropZone_Drop">
+            <StackPanel Spacing="10">
+                <TextBlock Text="拖拽 .webp 文件到这里（支持单张和批量）" />
+                <Button
+                    x:Name="SelectFilesButton"
+                    HorizontalAlignment="Left"
+                    Click="SelectFilesButton_Click"
+                    Content="选择 WebP 文件" />
+            </StackPanel>
+        </Border>
+
+        <StackPanel
+            Grid.Row="2"
+            Orientation="Horizontal"
+            Spacing="8">
+            <Button
+                x:Name="StartConvertButton"
+                Click="StartConvertButton_Click"
+                Content="开始转换"
+                IsEnabled="False" />
+            <Button
+                x:Name="CancelConvertButton"
+                Click="CancelConvertButton_Click"
+                Content="取消转换"
+                IsEnabled="False" />
+        </StackPanel>
+
+        <ProgressBar
+            x:Name="ConvertProgressBar"
+            Grid.Row="3"
+            Height="10"
+            Minimum="0"
+            Maximum="1"
+            Value="0" />
+
+        <TextBlock
+            x:Name="StatusTextBlock"
+            Grid.Row="4"
+            Text="请选择或拖拽 WebP 文件。"
+            TextWrapping="Wrap" />
+
+        <ListView
+            x:Name="SelectedFilesListView"
+            Grid.Row="5" />
+    </Grid>
+</Window>
