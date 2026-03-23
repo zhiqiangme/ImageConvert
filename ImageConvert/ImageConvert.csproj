@@ -5,7 +5,7 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>ImageConvert</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>..\Resources\v1.0.0\ImageConvert_v1.0.0.ico</ApplicationIcon>
+    <ApplicationIcon>..\Assets\ImageConvert_v1.0.0.ico</ApplicationIcon>
     <WindowsPackageType>None</WindowsPackageType>
     <Platforms>x64</Platforms>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
@@ -15,7 +15,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\Resources\v1.0.0\ImageConvert_v1.0.0.ico" Link="Assets\ImageConvert_v1.0.0.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Remove="Assets\**" />
+    <None Remove="Assets\**" />
+    <PRIResource Remove="Assets\**" />
+    <Content Include="..\Assets\ImageConvert_v1.0.0.ico" Link="Assets\ImageConvert_v1.0.0.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,8 +27,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
-    <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.10.2" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260317003" />
+    <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.11.0" />
   </ItemGroup>
 
   <!-- Publish Properties -->
