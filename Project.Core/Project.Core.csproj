@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>ImageConvert.Core</AssemblyName>
+    <RootNamespace>ImageConvert.Core</RootNamespace>
+    <Platforms>x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Project.Models\Project.Models.csproj" />
+    <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.11.0" />
+  </ItemGroup>
+
+</Project>
+

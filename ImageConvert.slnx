@@ -1,9 +1,0 @@
-<Solution>
-  <Configurations>
-    <Platform Name="x64" />
-  </Configurations>
-  <Project Path="ImageConvert/ImageConvert.csproj">
-    <Platform Solution="*|x64" Project="x64" />
-    <Deploy />
-  </Project>
-</Solution>

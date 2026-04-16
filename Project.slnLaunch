@@ -1,0 +1,12 @@
+[
+  {
+    "Name": "Project.UI",
+    "Projects": [
+      {
+        "Path": "Project.UI\\Project.UI.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
+

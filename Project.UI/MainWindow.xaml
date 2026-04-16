@@ -1,0 +1,234 @@
+<Window x:Class="ImageConvert.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:behaviors="clr-namespace:ImageConvert.UI.Behaviors"
+        xmlns:models="clr-namespace:ImageConvert.Models.Enums;assembly=ImageConvert.Models"
+        mc:Ignorable="d"
+        Title="{Binding Title}"
+        Icon="Assets/Project.ico"
+        Height="760"
+        Width="1120"
+        MinHeight="680"
+        MinWidth="920"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI, Microsoft YaHei"
+        Background="#F7F7FA"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        TextOptions.TextHintingMode="Fixed">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Window.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <TextBlock Style="{StaticResource H1TextStyle}" Text="WebP 无损转 PNG" />
+                <TextBlock Style="{StaticResource HintTextStyle}"
+                           Text="基于 MVVM 重构后的桌面工具。支持拖拽或多选 .webp 文件，串行转换为同目录 PNG，并自动避让重名输出。" />
+            </StackPanel>
+
+            <Border Grid.Column="1"
+                    Style="{StaticResource PanelBorderStyle}"
+                    Padding="18,12"
+                    Margin="20,0,0,0"
+                    VerticalAlignment="Top">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource LabelTextStyle}" Text="当前状态" />
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding Converter.StatusText}" />
+                    <TextBlock Margin="0,6,0,0"
+                               Style="{StaticResource HintTextStyle}"
+                               Text="{Binding Converter.SummaryText}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,22,0,22">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.1*" />
+                <ColumnDefinition Width="18" />
+                <ColumnDefinition Width="1.3*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Style="{StaticResource PanelBorderStyle}"
+                    behaviors:FileDropBehavior.IsEnabled="True"
+                    behaviors:FileDropBehavior.DropCommand="{Binding Converter.ReplaceFilesCommand}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource H2TextStyle}" Text="文件来源" />
+                    <Border Background="#F8FAFC"
+                            BorderBrush="#CBD5E1"
+                            BorderThickness="1.5"
+                            CornerRadius="10"
+                            Padding="22"
+                            Margin="0,0,0,18">
+                        <StackPanel>
+                            <TextBlock FontSize="16" FontWeight="SemiBold" Text="拖拽 .webp 文件到这里" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Style="{StaticResource HintTextStyle}"
+                                       Text="重新拖入或重新选择时，会以新的文件集覆盖当前列表。仅保留 .webp，并按完整路径去重。" />
+                            <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                                <Button MinWidth="132"
+                                        Command="{Binding Converter.BrowseFilesCommand}"
+                                        Content="选择 WebP 文件" />
+                                <Button MinWidth="96"
+                                        Margin="10,0,0,0"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        Command="{Binding Converter.ClearFilesCommand}"
+                                        Content="清空列表" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Style="{StaticResource LabelTextStyle}" Text="执行规则" />
+                    <TextBlock Style="{StaticResource HintTextStyle}" Text="1. 转换按文件顺序串行执行，便于取消和定位失败项。" />
+                    <TextBlock Style="{StaticResource HintTextStyle}" Text="2. 动态 WebP 会标记为“不支持动图”，不会中断整批处理。" />
+                    <TextBlock Style="{StaticResource HintTextStyle}" Text="3. 若目标 PNG 已存在，会自动输出为 *_1.png、*_2.png..." />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource PanelBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Style="{StaticResource H2TextStyle}" Text="转换控制" Margin="0,0,0,0" />
+                        <Button Grid.Column="1"
+                                MinWidth="112"
+                                Margin="12,0,0,0"
+                                Command="{Binding Converter.ConvertCommand}"
+                                Content="开始转换" />
+                        <Button Grid.Column="2"
+                                MinWidth="96"
+                                Margin="10,0,0,0"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding Converter.CancelCommand}"
+                                Content="取消转换" />
+                    </Grid>
+
+                    <ProgressBar Grid.Row="1"
+                                 Height="12"
+                                 Margin="0,18,0,10"
+                                 Minimum="0"
+                                 Maximum="{Binding Converter.ProgressMaximum}"
+                                 Value="{Binding Converter.ProgressValue}" />
+
+                    <TextBlock Grid.Row="2"
+                               Style="{StaticResource HintTextStyle}"
+                               Text="{Binding Converter.ProgressText}" />
+
+                    <ListView Grid.Row="3"
+                              Margin="0,18,0,0"
+                              ItemsSource="{Binding Converter.Files}">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,10"
+                                        Padding="14"
+                                        BorderBrush="#E2E8F0"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Background="White">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock FontSize="15"
+                                                   FontWeight="SemiBold"
+                                                   Text="{Binding FileName}" />
+
+                                        <Border Grid.Column="1"
+                                                Padding="8,3"
+                                                CornerRadius="999"
+                                                BorderThickness="1">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#F8FAFC" />
+                                                    <Setter Property="BorderBrush" Value="#CBD5E1" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding State}" Value="{x:Static models:ConversionItemState.Converting}">
+                                                            <Setter Property="Background" Value="#FEF3C7" />
+                                                            <Setter Property="BorderBrush" Value="#FBBF24" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding State}" Value="{x:Static models:ConversionItemState.Succeeded}">
+                                                            <Setter Property="Background" Value="#DCFCE7" />
+                                                            <Setter Property="BorderBrush" Value="#86EFAC" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding State}" Value="{x:Static models:ConversionItemState.UnsupportedAnimated}">
+                                                            <Setter Property="Background" Value="#FEE2E2" />
+                                                            <Setter Property="BorderBrush" Value="#FCA5A5" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding State}" Value="{x:Static models:ConversionItemState.Failed}">
+                                                            <Setter Property="Background" Value="#FEE2E2" />
+                                                            <Setter Property="BorderBrush" Value="#FCA5A5" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+
+                                            <TextBlock FontSize="12"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#334155"
+                                                       Text="{Binding StatusText}" />
+                                        </Border>
+
+                                        <TextBlock Grid.Row="1"
+                                                   Grid.ColumnSpan="2"
+                                                   Margin="0,10,0,0"
+                                                   Foreground="#475569"
+                                                   Text="{Binding InputPath}" />
+
+                                        <TextBlock Grid.Row="2"
+                                                   Grid.ColumnSpan="2"
+                                                   Margin="0,8,0,0"
+                                                   Style="{StaticResource HintTextStyle}"
+                                                   Text="{Binding DetailText}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="2"
+                Style="{StaticResource PanelBorderStyle}"
+                Visibility="{Binding Converter.HasFiles, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Style="{StaticResource HintTextStyle}"
+                       Text="提示：输出 PNG 会写回原始 WebP 所在目录；如果中途取消，当前已完成的文件会保留，后续文件不会继续执行。" />
+        </Border>
+    </Grid>
+</Window>

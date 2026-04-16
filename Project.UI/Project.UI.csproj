@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <Platforms>x64</Platforms>
+    <ApplicationIcon>Assets\Project.ico</ApplicationIcon>
+    
+    <AssemblyName>ImageConvert</AssemblyName>
+    <RootNamespace>ImageConvert.UI</RootNamespace>
+
+    <Product>ImageConvert</Product>
+    <Title>ImageConvert</Title>
+    <Description>WebP 批量转 PNG 工具。</Description>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0</FileVersion>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Project.Core\Project.Core.csproj" />
+    <ProjectReference Include="..\Project.ViewModels\Project.ViewModels.csproj" />
+
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Project.ico" />
+  </ItemGroup>
+
+</Project>
