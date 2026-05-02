@@ -87,10 +87,17 @@ public sealed partial class ImageConvertViewModel : ObservableObject
 
     private async Task BrowseFilesAsync()
     {
-        var paths = await _fileDialogService.PickWebpFilesAsync();
-        if (paths.Count > 0)
+        try
         {
-            await ReplaceFilesAsync(paths);
+            var paths = await _fileDialogService.PickWebpFilesAsync();
+            if (paths is { Count: > 0 })
+            {
+                await ReplaceFilesAsync(paths);
+            }
+        }
+        catch (Exception ex)
+        {
+            _userNotificationService.ShowInfo("错误", $"选择文件时发生错误：{ex.Message}");
         }
     }
 
@@ -166,7 +173,17 @@ public sealed partial class ImageConvertViewModel : ObservableObject
         try
         {
             var summary = await _imageConversionService.ConvertAsync(workItems, progress, _conversionCts.Token);
-            ApplySummary(summary);
+
+            if (summary.IsCanceled)
+            {
+                StatusText = "已取消";
+                SummaryText = $"已取消。已处理 {summary.ProcessedCount}/{summary.TotalCount} 个文件。";
+                ProgressText = $"取消请求已生效，最终停在 {summary.ProcessedCount}/{summary.TotalCount}。";
+            }
+            else
+            {
+                ApplySummary(summary);
+            }
         }
         catch (OperationCanceledException)
         {
@@ -174,6 +191,13 @@ public sealed partial class ImageConvertViewModel : ObservableObject
             StatusText = "已取消";
             SummaryText = $"已取消。已处理 {processed}/{Files.Count} 个文件。";
             ProgressText = $"取消请求已生效，最终停在 {processed}/{Files.Count}。";
+        }
+        catch (Exception ex)
+        {
+            StatusText = "转换出错";
+            SummaryText = $"转换过程中发生错误：{ex.Message}";
+            ProgressText = "请检查文件后重试。";
+            _userNotificationService.ShowInfo("错误", $"转换过程中发生错误：{ex.Message}");
         }
         finally
         {

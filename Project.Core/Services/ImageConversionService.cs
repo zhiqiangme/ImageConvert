@@ -13,7 +13,7 @@ public sealed class ImageConversionService : IImageConversionService
         IProgress<ConversionProgress>? progress,
         CancellationToken cancellationToken)
     {
-        return Task.Run(() => ConvertInternal(items, progress, cancellationToken), CancellationToken.None);
+        return Task.Run(() => ConvertInternal(items, progress, cancellationToken), cancellationToken);
     }
 
     private static ConversionSummary ConvertInternal(
@@ -26,44 +26,73 @@ public sealed class ImageConversionService : IImageConversionService
         var failed = 0;
         var unsupportedAnimated = 0;
 
-        for (var index = 0; index < items.Count; index++)
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            for (var index = 0; index < items.Count; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
 
-            var item = items[index];
-            progress?.Report(new ConversionProgress(
-                ConversionProgressStage.Started,
-                index + 1,
+                var item = items[index];
+
+                try
+                {
+                    progress?.Report(new ConversionProgress(
+                        ConversionProgressStage.Started,
+                        index + 1,
+                        items.Count,
+                        item,
+                        null));
+                }
+                catch (Exception)
+                {
+                    // Progress callback failure should not abort conversion.
+                }
+
+                ConversionItemResult result;
+
+                try
+                {
+                    var outputPath = ConvertSingle(item.InputPath, cancellationToken);
+                    result = new ConversionItemResult(item.InputPath, ConversionItemState.Succeeded, outputPath, "转换成功");
+                    converted++;
+                }
+                catch (AnimatedWebpNotSupportedException ex)
+                {
+                    result = new ConversionItemResult(item.InputPath, ConversionItemState.UnsupportedAnimated, null, ex.Message);
+                    unsupportedAnimated++;
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    result = new ConversionItemResult(item.InputPath, ConversionItemState.Failed, null, ex.Message);
+                    failed++;
+                }
+
+                processed++;
+
+                try
+                {
+                    progress?.Report(new ConversionProgress(
+                        ConversionProgressStage.Completed,
+                        index + 1,
+                        items.Count,
+                        item,
+                        result));
+                }
+                catch (Exception)
+                {
+                    // Progress callback failure should not abort conversion.
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            return new ConversionSummary(
                 items.Count,
-                item,
-                null));
-
-            ConversionItemResult result;
-
-            try
-            {
-                var outputPath = ConvertSingle(item.InputPath, cancellationToken);
-                result = new ConversionItemResult(item.InputPath, ConversionItemState.Succeeded, outputPath, "转换成功");
-                converted++;
-            }
-            catch (AnimatedWebpNotSupportedException ex)
-            {
-                result = new ConversionItemResult(item.InputPath, ConversionItemState.UnsupportedAnimated, null, ex.Message);
-                unsupportedAnimated++;
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                result = new ConversionItemResult(item.InputPath, ConversionItemState.Failed, null, ex.Message);
-                failed++;
-            }
-
-            processed++;
-            progress?.Report(new ConversionProgress(
-                ConversionProgressStage.Completed,
-                index + 1,
-                items.Count,
-                item,
-                result));
+                processed,
+                converted,
+                failed,
+                unsupportedAnimated,
+                true);
         }
 
         return new ConversionSummary(
@@ -85,7 +114,7 @@ public sealed class ImageConversionService : IImageConversionService
         }
 
         using var collection = new MagickImageCollection();
-        collection.Ping(inputPath);
+        collection.Read(inputPath);
         if (collection.Count > 1)
         {
             throw new AnimatedWebpNotSupportedException(inputPath);
@@ -94,7 +123,7 @@ public sealed class ImageConversionService : IImageConversionService
         cancellationToken.ThrowIfCancellationRequested();
 
         var outputPath = GetUniqueOutputPath(inputPath);
-        using var image = new MagickImage(inputPath);
+        using var image = new MagickImage(collection[0]);
         image.Format = MagickFormat.Png;
         image.Write(outputPath);
         return outputPath;

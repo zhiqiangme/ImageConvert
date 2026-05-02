@@ -13,7 +13,7 @@ public sealed partial class ConversionItemViewModel : ObservableObject
     private string _statusText = "待转换";
 
     [ObservableProperty]
-    private string _detailText;
+    private string _detailText = "";
 
     public ConversionItemViewModel(string inputPath)
     {
