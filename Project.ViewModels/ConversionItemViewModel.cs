@@ -4,6 +4,9 @@ using ImageConvert.Models.Enums;
 
 namespace ImageConvert.ViewModels;
 
+/// <summary>
+/// 单个转换文件的 ViewModel，跟踪文件的转换状态并在 ListView 中展示。
+/// </summary>
 public sealed partial class ConversionItemViewModel : ObservableObject
 {
     [ObservableProperty]
@@ -22,10 +25,15 @@ public sealed partial class ConversionItemViewModel : ObservableObject
         DetailText = inputPath;
     }
 
+    /// <summary>文件名（含扩展名），用于 UI 显示</summary>
     public string FileName { get; }
 
+    /// <summary>输入文件的完整路径</summary>
     public string InputPath { get; }
 
+    /// <summary>
+    /// 重置为待转换状态，用于重新开始批量转换前清空上一次的结果。
+    /// </summary>
     public void Reset()
     {
         State = ConversionItemState.Pending;
@@ -33,6 +41,9 @@ public sealed partial class ConversionItemViewModel : ObservableObject
         DetailText = InputPath;
     }
 
+    /// <summary>
+    /// 标记为正在转换中。
+    /// </summary>
     public void MarkConverting()
     {
         State = ConversionItemState.Converting;
@@ -40,6 +51,9 @@ public sealed partial class ConversionItemViewModel : ObservableObject
         DetailText = InputPath;
     }
 
+    /// <summary>
+    /// 应用转换结果，更新状态文本和详情文本。
+    /// </summary>
     public void ApplyResult(ConversionItemResult result)
     {
         State = result.State;

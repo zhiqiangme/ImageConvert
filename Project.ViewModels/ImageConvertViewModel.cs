@@ -7,13 +7,19 @@ using ImageConvert.Models.Enums;
 
 namespace ImageConvert.ViewModels;
 
+/// <summary>
+/// 图片转换功能的主 ViewModel，管理文件列表、转换流程、进度展示和命令绑定。
+/// </summary>
 public sealed partial class ImageConvertViewModel : ObservableObject
 {
     private readonly IImageConversionService _imageConversionService;
     private readonly IFileDialogService _fileDialogService;
     private readonly IUserNotificationService _userNotificationService;
+
+    /// <summary>文件路径到 ViewModel 的快速查找表，用于进度回调时定位对应的列表项</summary>
     private readonly Dictionary<string, ConversionItemViewModel> _fileLookup = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>当前转换任务的取消令牌源，为 null 表示没有正在进行的转换</summary>
     private CancellationTokenSource? _conversionCts;
 
     [ObservableProperty]
@@ -49,11 +55,14 @@ public sealed partial class ImageConvertViewModel : ObservableObject
         CancelCommand = new RelayCommand(Cancel, CanCancel);
         ClearFilesCommand = new RelayCommand(ClearFiles, CanClearFiles);
 
+        // 监听集合变化，自动通知 UI 更新 HasFiles 绑定（控制底部提示栏的显示/隐藏）
         Files.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasFiles));
     }
 
+    /// <summary>待转换文件列表，绑定到 ListView</summary>
     public ObservableCollection<ConversionItemViewModel> Files { get; } = [];
 
+    /// <summary>是否有文件被载入，用于控制底部提示栏的可见性</summary>
     public bool HasFiles => Files.Count > 0;
 
     public IAsyncRelayCommand BrowseFilesCommand { get; }
@@ -66,6 +75,9 @@ public sealed partial class ImageConvertViewModel : ObservableObject
 
     public IRelayCommand ClearFilesCommand { get; }
 
+    /// <summary>
+    /// IsConverting 变化时刷新所有命令的可执行状态。
+    /// </summary>
     partial void OnIsConvertingChanged(bool value)
     {
         BrowseFilesCommand.NotifyCanExecuteChanged();
@@ -85,6 +97,9 @@ public sealed partial class ImageConvertViewModel : ObservableObject
 
     private bool CanClearFiles() => !IsConverting && Files.Count > 0;
 
+    /// <summary>
+    /// 通过文件对话框选择 WebP 文件并替换当前文件列表。
+    /// </summary>
     private async Task BrowseFilesAsync()
     {
         try
@@ -101,6 +116,10 @@ public sealed partial class ImageConvertViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// 用新的文件路径列表替换当前文件列表。
+    /// 会过滤非 .webp 文件、空路径，并按完整路径去重。
+    /// </summary>
     private Task ReplaceFilesAsync(IReadOnlyList<string>? paths)
     {
         if (paths is null)
@@ -108,6 +127,7 @@ public sealed partial class ImageConvertViewModel : ObservableObject
             return Task.CompletedTask;
         }
 
+        // 规范化路径：过滤空值、转为绝对路径、仅保留 .webp、去重
         var normalizedPaths = paths
             .Where(path => !string.IsNullOrWhiteSpace(path))
             .Select(Path.GetFullPath)
@@ -144,6 +164,9 @@ public sealed partial class ImageConvertViewModel : ObservableObject
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// 执行批量转换。在后台线程中运行，通过 Progress 回调更新 UI。
+    /// </summary>
     private async Task ConvertAsync()
     {
         if (Files.Count == 0)
@@ -151,6 +174,7 @@ public sealed partial class ImageConvertViewModel : ObservableObject
             return;
         }
 
+        // 重置所有文件项的状态
         foreach (var item in Files)
         {
             item.Reset();
@@ -168,6 +192,7 @@ public sealed partial class ImageConvertViewModel : ObservableObject
             .Select(item => new ConversionWorkItem(item.InputPath))
             .ToList();
 
+        // Progress<T> 会自动将回调调度到创建时的 SynchronizationContext（UI 线程）
         var progress = new Progress<ConversionProgress>(HandleProgress);
 
         try
@@ -187,6 +212,7 @@ public sealed partial class ImageConvertViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
+            // Task.Run 级别的取消（如 token 在 Task 启动前已取消）
             var processed = (int)ProgressValue;
             StatusText = "已取消";
             SummaryText = $"已取消。已处理 {processed}/{Files.Count} 个文件。";
@@ -207,6 +233,9 @@ public sealed partial class ImageConvertViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// 请求取消当前转换任务，当前文件处理完毕后停止后续文件。
+    /// </summary>
     private void Cancel()
     {
         _conversionCts?.Cancel();
@@ -214,6 +243,9 @@ public sealed partial class ImageConvertViewModel : ObservableObject
         SummaryText = "当前文件结束后会停止后续转换。";
     }
 
+    /// <summary>
+    /// 清空文件列表和所有状态，恢复到初始界面。
+    /// </summary>
     private void ClearFiles()
     {
         Files.Clear();
@@ -227,6 +259,9 @@ public sealed partial class ImageConvertViewModel : ObservableObject
         ClearFilesCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>
+    /// 处理来自转换服务的进度回调，在 UI 线程上更新对应的文件项状态和进度条。
+    /// </summary>
     private void HandleProgress(ConversionProgress progress)
     {
         if (!_fileLookup.TryGetValue(progress.Item.InputPath, out var itemViewModel))
@@ -234,6 +269,7 @@ public sealed partial class ImageConvertViewModel : ObservableObject
             return;
         }
 
+        // 文件开始处理：标记为"转换中"并更新状态栏
         if (progress.Stage == ConversionProgressStage.Started)
         {
             itemViewModel.MarkConverting();
@@ -247,6 +283,7 @@ public sealed partial class ImageConvertViewModel : ObservableObject
             return;
         }
 
+        // 文件处理完成：应用结果并更新进度条
         itemViewModel.ApplyResult(progress.Result);
         ProgressValue = progress.CurrentIndex;
         StatusText = $"已处理 {progress.CurrentIndex}/{progress.TotalCount}";
@@ -259,6 +296,9 @@ public sealed partial class ImageConvertViewModel : ObservableObject
         };
     }
 
+    /// <summary>
+    /// 应用最终的转换摘要到 UI。
+    /// </summary>
     private void ApplySummary(ConversionSummary summary)
     {
         ProgressValue = summary.ProcessedCount;

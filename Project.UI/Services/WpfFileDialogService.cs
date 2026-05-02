@@ -3,6 +3,9 @@ using ImageConvert.Core.Abstractions;
 
 namespace ImageConvert.UI.Services;
 
+/// <summary>
+/// WPF 平台的文件选择对话框服务，使用 Win32 OpenFileDialog。
+/// </summary>
 public sealed class WpfFileDialogService : IFileDialogService
 {
     public Task<IReadOnlyList<string>> PickWebpFilesAsync()
