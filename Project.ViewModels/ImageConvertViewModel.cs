@@ -48,6 +48,8 @@ public sealed partial class ImageConvertViewModel : ObservableObject
         ConvertCommand = new AsyncRelayCommand(ConvertAsync, CanConvert);
         CancelCommand = new RelayCommand(Cancel, CanCancel);
         ClearFilesCommand = new RelayCommand(ClearFiles, CanClearFiles);
+
+        Files.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasFiles));
     }
 
     public ObservableCollection<ConversionItemViewModel> Files { get; } = [];
@@ -130,7 +132,6 @@ public sealed partial class ImageConvertViewModel : ObservableObject
             : $"已选择 {Files.Count} 张图片。";
         SummaryText = "等待开始转换。";
 
-        OnPropertyChanged(nameof(HasFiles));
         ConvertCommand.NotifyCanExecuteChanged();
         ClearFilesCommand.NotifyCanExecuteChanged();
         return Task.CompletedTask;
