@@ -199,7 +199,6 @@ public sealed partial class ImageConvertViewModel : ObservableObject
         ProgressText = "当前未开始转换。";
         StatusText = "请选择或拖拽 WebP 文件。";
         SummaryText = "当前未选择文件。";
-        OnPropertyChanged(nameof(HasFiles));
         ConvertCommand.NotifyCanExecuteChanged();
         ClearFilesCommand.NotifyCanExecuteChanged();
     }
